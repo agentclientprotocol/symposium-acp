@@ -22,8 +22,11 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::Duration;
 
-use sacp::schema::{ContentBlock, ContentChunk, SessionId, SessionNotification, SessionUpdate};
-use sacp::{Agent, Client, Conductor, ConnectTo, Proxy};
+use sacp::schema::{
+    ContentBlock, ContentChunk, PromptRequest, SessionId, SessionNotification, SessionUpdate,
+};
+use sacp::util::MatchDispatch;
+use sacp::{Agent, Client, Conductor, ConnectTo, Dispatch, Proxy};
 use tokio::sync::Mutex;
 
 /// A debouncing proxy that coalesces `AgentMessageChunk` notifications.
@@ -57,55 +60,67 @@ impl Decaf {
         Proxy
             .builder()
             .name("decaf")
-            .on_receive_notification_from(
+            .on_receive_dispatch_from(
                 Agent,
                 {
                     let state = state.clone();
-                    async move |notification: SessionNotification, cx| {
-                        let is_text_chunk = matches!(
-                            &notification.update,
-                            SessionUpdate::AgentMessageChunk(ContentChunk {
-                                content: ContentBlock::Text(_),
-                                ..
+                    async move |dispatch: Dispatch, cx| {
+                        MatchDispatch::new(dispatch)
+                            .if_notification(async |notification: SessionNotification| {
+                                let is_text_chunk = matches!(
+                                    &notification.update,
+                                    SessionUpdate::AgentMessageChunk(ContentChunk {
+                                        content: ContentBlock::Text(_),
+                                        ..
+                                    })
+                                );
+
+                                if is_text_chunk {
+                                    // Buffer the text chunk
+                                    let mut sessions = state.lock().await;
+                                    let text = match &notification.update {
+                                        SessionUpdate::AgentMessageChunk(ContentChunk {
+                                            content: ContentBlock::Text(tc),
+                                            ..
+                                        }) => tc.text.clone(),
+                                        _ => unreachable!(),
+                                    };
+
+                                    match sessions.get_mut(&notification.session_id) {
+                                        Some(buffered) => {
+                                            buffered.text.push_str(&text);
+                                            buffered.template = notification;
+                                        }
+                                        None => {
+                                            sessions.insert(
+                                                notification.session_id.clone(),
+                                                BufferedSession {
+                                                    text,
+                                                    template: notification,
+                                                },
+                                            );
+                                        }
+                                    }
+                                } else {
+                                    // Non-chunk message: flush buffer first, then forward
+                                    flush_session(&state, &notification.session_id, &cx).await?;
+                                    cx.send_notification_to(Client, notification)?;
+                                }
+
+                                Ok(())
                             })
-                        );
-
-                        if is_text_chunk {
-                            // Buffer the text chunk
-                            let mut sessions = state.lock().await;
-                            let text = match &notification.update {
-                                SessionUpdate::AgentMessageChunk(ContentChunk {
-                                    content: ContentBlock::Text(tc),
-                                    ..
-                                }) => tc.text.clone(),
-                                _ => unreachable!(),
-                            };
-
-                            match sessions.get_mut(&notification.session_id) {
-                                Some(buffered) => {
-                                    buffered.text.push_str(&text);
-                                    buffered.template = notification;
-                                }
-                                None => {
-                                    sessions.insert(
-                                        notification.session_id.clone(),
-                                        BufferedSession {
-                                            text,
-                                            template: notification,
-                                        },
-                                    );
-                                }
-                            }
-                        } else {
-                            // Non-chunk message: flush buffer first, then forward
-                            flush_session(&state, &notification.session_id, &cx).await?;
-                            cx.send_notification_to(Client, notification)?;
-                        }
-
-                        Ok(())
+                            .await
+                            .if_response_to::<PromptRequest, _>(async |result, router| {
+                                // Flush any remaining buffered text before
+                                // the prompt response reaches the client.
+                                flush_all(&state, &cx).await?;
+                                router.respond_with_result(result)
+                            })
+                            .await
+                            .done()
                     }
                 },
-                sacp::on_receive_notification!(),
+                sacp::on_receive_dispatch!(),
             )
             .with_spawned({
                 let state = state.clone();
