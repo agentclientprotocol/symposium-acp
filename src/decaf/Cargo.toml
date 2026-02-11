@@ -1,6 +1,6 @@
 [package]
 name = "decaf"
-version = "11.0.0-alpha.1"
+version = "1.0.0-alpha.1"
 edition = "2024"
 description = "Debouncing proxy for ACP - coalesces agent message chunks"
 license = "MIT OR Apache-2.0"
