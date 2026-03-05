@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0-alpha.2](https://github.com/symposium-dev/symposium-acp/compare/elizacp-v11.0.0-alpha.1...elizacp-v11.0.0-alpha.2) - 2026-01-19
+
+### Fixed
+
+- *(sacp)* revert accidental JrMessageHandler and JrRequestCx renames
+
+### Other
+
+- upgrade to 11.0-alpha.1
+- release
+- go back from `connect_from` to `builder`
+- *(sacp)* [**breaking**] rename *_cx variables to descriptive names
+- *(sacp)* [**breaking**] rename Serve to ConnectTo for clearer semantics
+- *(sacp)* [**breaking**] replace JrLink/JrPeer with unified Role-based API
+- *(sacp)* rename context types for clarity
+- *(sacp)* rename Jr* traits to JsonRpc* for clarity
+
 ## [12.0.0](https://github.com/symposium-dev/symposium-acp/compare/elizacp-v11.0.0...elizacp-v12.0.0) - 2026-01-19
 
 ### Fixed

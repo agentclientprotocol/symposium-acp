@@ -1,6 +1,6 @@
 [package]
 name = "elizacp"
-version = "11.0.0-alpha.1"
+version = "11.0.0-alpha.2"
 edition = "2024"
 description = "Classic Eliza chatbot as an ACP agent for testing"
 license = "MIT OR Apache-2.0"

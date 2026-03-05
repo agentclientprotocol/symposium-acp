@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0-alpha.1](https://github.com/symposium-dev/symposium-acp/releases/tag/sacp-cookbook-v11.0.0-alpha.1) - 2026-01-19
+
+### Other
+
+- upgrade to 11.0-alpha.1
+- release
+- go back from `connect_from` to `builder`
+- fix unresolved rustdoc link warnings for v11 API
+- *(sacp-cookbook)* update cookbook examples for v11 Role-based API
+- *(sacp)* [**breaking**] rename HandleMessageFrom to HandleDispatchFrom
+- *(sacp)* [**breaking**] rename *_cx variables to descriptive names
+- *(sacp)* [**breaking**] rename MessageCx to Dispatch for clearer semantics
+- *(sacp)* [**breaking**] rename Serve to ConnectTo for clearer semantics
+- *(sacp)* [**breaking**] replace JrLink/JrPeer with unified Role-based API
+- *(sacp)* rename JrMessageHandler to HandleMessageFrom
+- *(sacp)* rename JrConnectionBuilder to ConnectFrom
+- *(sacp)* simplify spawn_connection API
+- *(sacp)* rename context types for clarity
+- *(sacp)* rename JrResponder ecosystem to Run
+
 ## [11.0.0](https://github.com/symposium-dev/symposium-acp/compare/sacp-cookbook-v10.0.1...sacp-cookbook-v11.0.0) - 2026-01-19
 
 ### Other

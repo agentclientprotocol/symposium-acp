@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [11.0.0-alpha.1](https://github.com/symposium-dev/symposium-acp/releases/tag/sacp-v11.0.0-alpha.1) - 2026-01-19
+
+### Added
+
+- *(sacp)* introduce Role trait system
+- *(sacp)* expose outgoing request id on JrResponse
+- *(sacp)* parse responses in into_typed_message_cx
+- *(sacp)* add matches_method to JrMessage, change parse_message to return Result
+- *(sacp)* add if_response_to and if_ok_response_to to MatchMessageFrom
+- *(sacp)* add if_response_to and if_ok_response_to to MatchMessage
+- *(sacp)* route responses through handler chain
+- *(sacp)* store method name with pending reply subscriptions
+- *(sacp)* add Response variant to MessageCx
+
+### Fixed
+
+- *(sacp)* revert accidental JrMessageHandler and JrRequestCx renames
+- *(conductor)* handle Response variants in message forwarding
+
+### Other
+
+- upgrade to 11.0-alpha.1
+- release
+- go back from `connect_from` to `builder`
+- fix unresolved rustdoc link warnings for v11 API
+- *(sacp)* [**breaking**] rename HandleMessageFrom to HandleDispatchFrom
+- *(sacp)* [**breaking**] rename *_cx variables to descriptive names
+- *(sacp)* [**breaking**] rename MessageCx to Dispatch for clearer semantics
+- *(sacp)* update doctests for new Role-based API
+- *(sacp)* [**breaking**] rename Serve to ConnectTo for clearer semantics
+- *(sacp)* [**breaking**] replace JrLink/JrPeer with unified Role-based API
+- *(sacp)* rename JrMessageHandler to HandleMessageFrom
+- *(sacp)* rename JrConnectionBuilder to ConnectFrom
+- *(sacp)* simplify spawn_connection API
+- *(sacp)* rename context types for clarity
+- *(sacp)* rename JrResponder ecosystem to Run
+- *(sacp)* rename Jr* traits to JsonRpc* for clarity
+- wip
+- wip
+- *(sacp)* use handle_incoming_message for response peer filtering
+- *(sacp)* introduce JrResponseCx for incoming response handling
+- *(sacp)* unify JrRequestCx send logic into send_fn
+
 ## [11.0.0](https://github.com/symposium-dev/symposium-acp/compare/sacp-v10.1.0...sacp-v11.0.0) - 2026-01-19
 
 ### Added
