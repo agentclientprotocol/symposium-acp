@@ -680,7 +680,7 @@ where
         // Step 3: Drain any messages that were already queued and forward to client.
         // These messages arrived before we dropped the handler but haven't been
         // consumed yet. We must forward them to maintain message ordering.
-        while let Some(message) = update_rx.try_next().ok().flatten() {
+        while let Some(message) = update_rx.try_recv().ok() {
             match message {
                 SessionMessage::SessionMessage(dispatch) => {
                     // Forward the message to the client
