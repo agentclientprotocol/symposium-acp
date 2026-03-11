@@ -425,7 +425,7 @@ async fn test_trace_mcp_tool_call() -> Result<(), sacp::Error> {
                         "capabilities": Object {},
                         "clientInfo": Object {
                             "name": String("rmcp"),
-                            "version": String("1.0.0-alpha"),
+                            "version": String("1.2.0"),
                         },
                         "protocolVersion": String("2025-06-18"),
                     },
@@ -446,7 +446,7 @@ async fn test_trace_mcp_tool_call() -> Result<(), sacp::Error> {
                         "protocolVersion": String("2025-06-18"),
                         "serverInfo": Object {
                             "name": String("rmcp"),
-                            "version": String("1.0.0-alpha"),
+                            "version": String("1.2.0"),
                         },
                     },
                 },
