@@ -510,21 +510,21 @@ trait ErasedMcpTool<Counterpart: Role>: Send + Sync {
 
 /// Create an `rmcp` tool model from our [`McpTool`] trait.
 fn make_tool_model<R: Role, M: McpTool<R>>(tool: &M) -> Tool {
-    {
-        rmcp::model::Tool::new(
-            tool.name(),
-            tool.description(),
-            schema_for_type::<M::Input>(),
-        )
+    let mut tool = rmcp::model::Tool::new(
+        tool.name(),
+        tool.description(),
+        schema_for_type::<M::Input>(),
+    )
+    .with_execution(rmcp::model::ToolExecution::new());
+
+    if let Some(schema) = schema_for_output::<M::Output>().ok() {
         // schema_for_output returns Err for non-object types (strings, integers, etc.)
-        // since MCP structured output requires JSON objects. We use .ok() to set
+        // since MCP structured output requires JSON objects. We set
         // output_schema to None for these tools, signaling unstructured output.
-        .with_raw_output_schema(schema_for_output::<M::Output>().ok())
-        .with_annotations(None)
-        .with_icons(None)
-        .with_meta(None)
-        .with_execution(Some(rmcp::model::ToolExecution::new()))
+        tool = tool.with_raw_output_schema(schema);
     }
+
+    tool
 }
 
 /// Create a [`ErasedMcpTool`] from a [`McpTool`], erasing the type details.
