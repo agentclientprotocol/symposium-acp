@@ -30,6 +30,7 @@ impl JsonRpcMessage for ClientRequest {
             ClientRequest::NewSessionRequest(_) => "session/new",
             ClientRequest::LoadSessionRequest(_) => "session/load",
             ClientRequest::SetSessionModeRequest(_) => "session/set_mode",
+            ClientRequest::SetSessionConfigOptionRequest(_) => "session/set_config_option",
             ClientRequest::PromptRequest(_) => "session/prompt",
             ClientRequest::ExtMethodRequest(ext) => &ext.method,
             _ => "_unknown",
@@ -47,6 +48,7 @@ impl JsonRpcMessage for ClientRequest {
             "session/new" => json_cast(params).map(ClientRequest::NewSessionRequest),
             "session/load" => json_cast(params).map(ClientRequest::LoadSessionRequest),
             "session/set_mode" => json_cast(params).map(ClientRequest::SetSessionModeRequest),
+            "session/set_config_option" => json_cast(params).map(ClientRequest::SetSessionConfigOptionRequest),
             "session/prompt" => json_cast(params).map(ClientRequest::PromptRequest),
             _ => {
                 // Check for extension methods (prefixed with underscore)
@@ -128,7 +130,7 @@ impl JsonRpcMessage for AgentRequest {
             AgentRequest::TerminalOutputRequest(_) => "terminal/output",
             AgentRequest::ReleaseTerminalRequest(_) => "terminal/release",
             AgentRequest::WaitForTerminalExitRequest(_) => "terminal/wait_for_exit",
-            AgentRequest::KillTerminalCommandRequest(_) => "terminal/kill",
+            AgentRequest::KillTerminalRequest(_) => "terminal/kill",
             AgentRequest::ExtMethodRequest(ext) => &ext.method,
             _ => "_unknown",
         }
@@ -151,7 +153,7 @@ impl JsonRpcMessage for AgentRequest {
             "terminal/wait_for_exit" => {
                 json_cast(params).map(AgentRequest::WaitForTerminalExitRequest)
             }
-            "terminal/kill" => json_cast(params).map(AgentRequest::KillTerminalCommandRequest),
+            "terminal/kill" => json_cast(params).map(AgentRequest::KillTerminalRequest),
             _ => {
                 // Check for extension methods (prefixed with underscore)
                 if let Some(custom_method) = method.strip_prefix('_') {

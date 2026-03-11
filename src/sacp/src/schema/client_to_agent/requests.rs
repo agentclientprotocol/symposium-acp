@@ -1,7 +1,8 @@
 use crate::schema::{
     AuthenticateRequest, AuthenticateResponse, InitializeRequest, InitializeResponse,
     LoadSessionRequest, LoadSessionResponse, NewSessionRequest, NewSessionResponse, PromptRequest,
-    PromptResponse, SetSessionModeRequest, SetSessionModeResponse,
+    PromptResponse, SetSessionConfigOptionRequest, SetSessionConfigOptionResponse,
+    SetSessionModeRequest, SetSessionModeResponse,
 };
 use serde::Serialize;
 
@@ -15,6 +16,7 @@ const METHOD_SESSION_LOAD: &str = "session/load";
 const METHOD_SESSION_NEW: &str = "session/new";
 const METHOD_SESSION_PROMPT: &str = "session/prompt";
 const METHOD_SESSION_SET_MODE: &str = "session/set_mode";
+const METHOD_SESSION_SET_CONFIG_OPTION: &str = "session/set_config_option";
 
 // ============================================================================
 // InitializeRequest
@@ -241,6 +243,45 @@ impl JsonRpcRequest for SetSessionModeRequest {
 }
 
 impl JsonRpcResponse for SetSessionModeResponse {
+    fn into_json(self, _method: &str) -> Result<serde_json::Value, crate::Error> {
+        serde_json::to_value(self).map_err(crate::Error::into_internal_error)
+    }
+
+    fn from_value(_method: &str, value: serde_json::Value) -> Result<Self, crate::Error> {
+        json_cast(&value)
+    }
+}
+
+// ============================================================================
+// SetSessionConfigOptionRequest
+// ============================================================================
+
+impl JsonRpcMessage for SetSessionConfigOptionRequest {
+    fn matches_method(method: &str) -> bool {
+        method == METHOD_SESSION_SET_CONFIG_OPTION
+    }
+
+    fn method(&self) -> &str {
+        METHOD_SESSION_SET_CONFIG_OPTION
+    }
+
+    fn to_untyped_message(&self) -> Result<crate::UntypedMessage, crate::Error> {
+        crate::UntypedMessage::new(self.method(), self)
+    }
+
+    fn parse_message(method: &str, params: &impl Serialize) -> Result<Self, crate::Error> {
+        if !Self::matches_method(method) {
+            return Err(crate::Error::method_not_found());
+        }
+        json_cast(params)
+    }
+}
+
+impl JsonRpcRequest for SetSessionConfigOptionRequest {
+    type Response = SetSessionConfigOptionResponse;
+}
+
+impl JsonRpcResponse for SetSessionConfigOptionResponse {
     fn into_json(self, _method: &str) -> Result<serde_json::Value, crate::Error> {
         serde_json::to_value(self).map_err(crate::Error::into_internal_error)
     }

@@ -2,8 +2,8 @@ use serde::Serialize;
 
 use crate::jsonrpc::{JsonRpcMessage, JsonRpcRequest, JsonRpcResponse};
 use crate::schema::{
-    CreateTerminalRequest, CreateTerminalResponse, KillTerminalCommandRequest,
-    KillTerminalCommandResponse, ReadTextFileRequest, ReadTextFileResponse, ReleaseTerminalRequest,
+    CreateTerminalRequest, CreateTerminalResponse, KillTerminalRequest,
+    KillTerminalResponse, ReadTextFileRequest, ReadTextFileResponse, ReleaseTerminalRequest,
     ReleaseTerminalResponse, RequestPermissionRequest, RequestPermissionResponse,
     TerminalOutputRequest, TerminalOutputResponse, WaitForTerminalExitRequest,
     WaitForTerminalExitResponse, WriteTextFileRequest, WriteTextFileResponse,
@@ -301,12 +301,12 @@ impl JsonRpcResponse for WaitForTerminalExitResponse {
 }
 
 // ============================================================================
-// KillTerminalCommandRequest
+// KillTerminalRequest
 // ============================================================================
 
 const METHOD_KILL_TERMINAL: &str = "terminal/kill";
 
-impl JsonRpcMessage for KillTerminalCommandRequest {
+impl JsonRpcMessage for KillTerminalRequest {
     fn matches_method(method: &str) -> bool {
         method == METHOD_KILL_TERMINAL
     }
@@ -327,11 +327,11 @@ impl JsonRpcMessage for KillTerminalCommandRequest {
     }
 }
 
-impl JsonRpcRequest for KillTerminalCommandRequest {
-    type Response = KillTerminalCommandResponse;
+impl JsonRpcRequest for KillTerminalRequest {
+    type Response = KillTerminalResponse;
 }
 
-impl JsonRpcResponse for KillTerminalCommandResponse {
+impl JsonRpcResponse for KillTerminalResponse {
     fn into_json(self, _method: &str) -> Result<serde_json::Value, crate::Error> {
         serde_json::to_value(self).map_err(crate::Error::into_internal_error)
     }
