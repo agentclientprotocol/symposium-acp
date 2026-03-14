@@ -1,6 +1,6 @@
 [package]
 name = "sacp-test"
-version = "11.0.0-alpha.1"
+version = "12.0.0-alpha.1"
 edition = "2024"
 description = "Test utilities and mock implementations for SACP"
 license = "MIT OR Apache-2.0"
@@ -10,9 +10,9 @@ name = "mcp-echo-server"
 path = "src/bin/mcp_echo_server.rs"
 
 [dependencies]
-sacp = { version = "11.0.0-alpha.1", path = "../sacp" }
-sacp-tokio = { version = "11.0.0-alpha.1", path = "../sacp-tokio" }
-yopo = { version = "11.0.0-alpha.1", path = "../yopo" }
+sacp = { version = "12.0.0-alpha.1", path = "../sacp" }
+sacp-tokio = { version = "12.0.0-alpha.1", path = "../sacp-tokio" }
+yopo = { version = "12.0.0-alpha.1", path = "../yopo" }
 rmcp = { workspace = true, features = ["server"] }
 schemars.workspace = true
 

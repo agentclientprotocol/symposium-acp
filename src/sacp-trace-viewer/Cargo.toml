@@ -1,6 +1,6 @@
 [package]
 name = "sacp-trace-viewer"
-version = "11.0.0-alpha.1"
+version = "12.0.0-alpha.1"
 edition = "2024"
 description = "Interactive sequence diagram viewer for SACP trace files"
 license = "MIT OR Apache-2.0"

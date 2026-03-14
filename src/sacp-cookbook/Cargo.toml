@@ -1,6 +1,6 @@
 [package]
 name = "sacp-cookbook"
-version = "11.0.0-alpha.1"
+version = "12.0.0-alpha.1"
 edition = "2024"
 description = "Cookbook of common patterns for building ACP components"
 license = "MIT OR Apache-2.0"
@@ -9,10 +9,10 @@ keywords = ["acp", "agent", "proxy", "mcp", "cookbook"]
 categories = ["development-tools"]
 
 [dependencies]
-sacp = { version = "11.0.0-alpha.1", path = "../sacp" }
-sacp-conductor = { version = "11.0.0-alpha.1", path = "../sacp-conductor" }
-sacp-rmcp = { version = "11.0.0-alpha.1", path = "../sacp-rmcp" }
-sacp-tokio = { version = "11.0.0-alpha.1", path = "../sacp-tokio" }
+sacp = { version = "12.0.0-alpha.1", path = "../sacp" }
+sacp-conductor = { version = "12.0.0-alpha.1", path = "../sacp-conductor" }
+sacp-rmcp = { version = "12.0.0-alpha.1", path = "../sacp-rmcp" }
+sacp-tokio = { version = "12.0.0-alpha.1", path = "../sacp-tokio" }
 
 # Re-export common dependencies needed by cookbook examples
 rmcp.workspace = true
