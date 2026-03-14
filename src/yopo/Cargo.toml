@@ -1,6 +1,6 @@
 [package]
 name = "yopo"
-version = "11.0.0-alpha.1"
+version = "12.0.0-alpha.1"
 edition = "2024"
 description = "YOPO (You Only Prompt Once) - A simple ACP client for one-shot prompts"
 license = "MIT OR Apache-2.0"
@@ -14,8 +14,8 @@ name = "yopo"
 path = "src/main.rs"
 
 [dependencies]
-sacp = { version = "11.0.0-alpha.1", path = "../sacp" }
-sacp-tokio = { version = "11.0.0-alpha.1", path = "../sacp-tokio" }
+sacp = { version = "12.0.0-alpha.1", path = "../sacp" }
+sacp-tokio = { version = "12.0.0-alpha.1", path = "../sacp-tokio" }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
