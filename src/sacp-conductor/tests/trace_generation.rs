@@ -8,7 +8,8 @@
 //! Run `just prep-tests` before running this test.
 
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
-use sacp_test::test_binaries::{arrow_proxy_example, elizacp};
+use sacp_test::test_binaries::{arrow_proxy_example, testy};
+use sacp_test::testy::TestyCommand;
 use sacp_tokio::AcpAgent;
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
@@ -27,7 +28,7 @@ async fn test_trace_generation() -> Result<(), sacp::Error> {
     // Uses pre-built binaries to avoid cargo run races during `cargo test --all`
     let arrow_proxy_agent =
         AcpAgent::from_args([arrow_proxy_example().to_string_lossy().to_string()])?;
-    let eliza_agent = elizacp();
+    let eliza_agent = testy();
 
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
@@ -55,7 +56,7 @@ async fn test_trace_generation() -> Result<(), sacp::Error> {
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 

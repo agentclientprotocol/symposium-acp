@@ -2,7 +2,7 @@
 
 use sacp::schema::InitializeRequest;
 use sacp::{Client, ConnectTo};
-use sacp_test::test_binaries::elizacp;
+use sacp_test::test_binaries::testy;
 use sacp_tokio::LineDirection;
 use std::sync::{Arc, Mutex};
 
@@ -43,8 +43,8 @@ async fn test_acp_agent_debug_callback() -> Result<(), Box<dyn std::error::Error
 
     let debug_log = DebugLog::default();
 
-    // Create an agent that runs elizacp
-    let agent = elizacp().with_debug({
+    // Create an agent that runs test-agent
+    let agent = testy().with_debug({
         let debug_log = debug_log.clone();
         move |line, direction| {
             debug_log.log(line, direction);

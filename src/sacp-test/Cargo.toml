@@ -4,16 +4,23 @@ version = "11.0.0"
 edition = "2024"
 description = "Test utilities and mock implementations for SACP"
 license = "MIT OR Apache-2.0"
+publish = false
 
 [[bin]]
 name = "mcp-echo-server"
 path = "src/bin/mcp_echo_server.rs"
 
+[[bin]]
+name = "testy"
+path = "src/bin/testy.rs"
+
 [dependencies]
 sacp = { version = "11.0.0", path = "../sacp" }
 sacp-tokio = { version = "11.0.0", path = "../sacp-tokio" }
 yopo = { version = "11.0.0", path = "../yopo" }
-rmcp = { workspace = true, features = ["server"] }
+rmcp = { workspace = true, features = ["server", "client", "transport-child-process", "transport-streamable-http-client-reqwest"] }
+anyhow.workspace = true
+uuid.workspace = true
 schemars.workspace = true
 
 serde.workspace = true

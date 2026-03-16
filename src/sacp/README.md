@@ -53,7 +53,6 @@ See the [crate documentation](https://docs.rs/sacp) for:
 You may also enjoy looking at:
 
 - **[`yolo_one_shot_client.rs`](examples/yolo_one_shot_client.rs)** - Complete client that spawns an agent and sends a prompt
-- **[`elizacp`](https://crates.io/crates/elizacp)** - Full working agent with session management
 - **[`sacp-conductor`](https://crates.io/crates/sacp-conductor)** - Orchestrates proxy chains with a final agent
 
 ## Related Crates

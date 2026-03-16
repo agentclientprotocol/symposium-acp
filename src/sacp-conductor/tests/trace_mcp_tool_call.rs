@@ -10,7 +10,6 @@
 
 mod mcp_integration;
 
-use elizacp::ElizaAgent;
 use expect_test::expect;
 use futures::channel::mpsc;
 use futures::{SinkExt, StreamExt};
@@ -20,6 +19,7 @@ use sacp::schema::{
 };
 use sacp_conductor::trace::TraceEvent;
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use std::collections::HashMap;
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
@@ -212,8 +212,7 @@ async fn test_trace_mcp_tool_call() -> Result<(), sacp::Error> {
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "conductor".to_string(),
-            ProxiesAndAgent::new(ElizaAgent::new(true))
-                .proxy(mcp_integration::proxy::ProxyComponent),
+            ProxiesAndAgent::new(Testy::new()).proxy(mcp_integration::proxy::ProxyComponent),
             Default::default(),
         )
         .trace_to(trace_tx)
@@ -254,13 +253,13 @@ async fn test_trace_mcp_tool_call() -> Result<(), sacp::Error> {
                     .await?;
 
                     // Send prompt that triggers MCP tool call
-                    // ElizaCP will parse this and make a tools/call request
                     recv(cx.send_request(PromptRequest::new(
                         session.session_id.clone(),
-                        vec![ContentBlock::Text(TextContent::new(
-                            r#"Use tool test::echo with {"message": "Hello from trace test!"}"#
-                                .to_string(),
-                        ))],
+                        vec![ContentBlock::Text(TextContent::new(TestyCommand::CallTool {
+                            server: "test".to_string(),
+                            tool: "echo".to_string(),
+                            params: serde_json::json!({"message": "Hello from trace test!"}),
+                        }.to_prompt()))],
                     )))
                     .await?;
 
@@ -404,7 +403,7 @@ async fn test_trace_mcp_tool_call() -> Result<(), sacp::Error> {
                     params: Object {
                         "prompt": Array [
                             Object {
-                                "text": String("Use tool test::echo with {\"message\": \"Hello from trace test!\"}"),
+                                "text": String("{\"command\":\"call_tool\",\"server\":\"test\",\"tool\":\"echo\",\"params\":{\"message\":\"Hello from trace test!\"}}"),
                                 "type": String("text"),
                             },
                         ],

@@ -32,8 +32,8 @@ This repository contains several crates:
 - **[`sacp-proxy`](./src/sacp-proxy/)** - Framework for building ACP proxy components
 - **[`sacp-conductor`](./src/sacp-conductor/)** - Binary that orchestrates proxy chains
 
-**Examples & Testing:**
-- **[`elizacp`](./src/elizacp/)** - Example ACP agent implementing the classic Eliza chatbot (useful for testing)
+**Testing:**
+- **[`sacp-test`](./src/sacp-test/)** - Test utilities, fixtures, and a built-in test agent
 
 ## Documentation
 

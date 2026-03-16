@@ -44,7 +44,6 @@ rustc-hash.workspace = true
 futures-concurrency = "7.6.3"
 
 [dev-dependencies]
-elizacp = { path = "../elizacp" }
 expect-test.workspace = true
 rmcp = { workspace = true, features = ["client", "server", "transport-io", "transport-child-process"] }
 schemars.workspace = true

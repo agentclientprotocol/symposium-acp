@@ -9,7 +9,6 @@
 //! Unlike trace_mcp_tool_call.rs which tests proxy-hosted MCP servers, this test
 //! verifies that MCP requests travel all the way back to the client.
 
-use elizacp::ElizaAgent;
 use expect_test::expect;
 use futures::StreamExt;
 use futures::channel::mpsc;
@@ -18,6 +17,7 @@ use sacp::schema::{InitializeRequest, ProtocolVersion};
 use sacp::{Client, Role, RunWithConnectionTo};
 use sacp_conductor::trace::TraceEvent;
 use sacp_conductor::{ConductorImpl, McpBridgeMode, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -229,7 +229,7 @@ async fn test_trace_client_mcp_server() -> Result<(), sacp::Error> {
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "conductor".to_string(),
-            ProxiesAndAgent::new(ElizaAgent::new(true)),
+            ProxiesAndAgent::new(Testy::new()),
             McpBridgeMode::default(),
         )
         .trace_to(trace_tx)
@@ -242,7 +242,8 @@ async fn test_trace_client_mcp_server() -> Result<(), sacp::Error> {
 
     // Run the client with a client-hosted MCP server
     let test_result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
-        sacp::Client.builder()
+        sacp::Client
+            .builder()
             .name("test-client")
             .connect_with(
                 sacp::ByteStreams::new(client_write.compat_write(), client_read.compat()),
@@ -263,9 +264,11 @@ async fn test_trace_client_mcp_server() -> Result<(), sacp::Error> {
                         .run_until(async |mut session| {
                             // Send prompt that triggers MCP tool call
                             // The tool call will travel: agent → conductor → client
-                            session.send_prompt(
-                                r#"Use tool echo-server::echo with {"message": "Hello from client test!"}"#,
-                            )?;
+                            session.send_prompt(TestyCommand::CallTool {
+                                server: "echo-server".to_string(),
+                                tool: "echo".to_string(),
+                                params: serde_json::json!({"message": "Hello from client test!"}),
+                            }.to_prompt())?;
                             session.read_to_string().await
                         })
                         .await?;
@@ -406,7 +409,7 @@ async fn test_trace_client_mcp_server() -> Result<(), sacp::Error> {
                     params: Object {
                         "prompt": Array [
                             Object {
-                                "text": String("Use tool echo-server::echo with {\"message\": \"Hello from client test!\"}"),
+                                "text": String("{\"command\":\"call_tool\",\"server\":\"echo-server\",\"tool\":\"echo\",\"params\":{\"message\":\"Hello from client test!\"}}"),
                                 "type": String("text"),
                             },
                         ],

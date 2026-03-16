@@ -4,10 +4,10 @@
 //! can capture references to stack-local data (like a Vec) and push to it
 //! when the tool is invoked.
 
-use elizacp::ElizaAgent;
 use sacp::mcp_server::McpServer;
 use sacp::{Agent, Conductor, ConnectTo, Proxy, Role, RunWithConnectionTo};
 use sacp_conductor::{ConductorImpl, McpBridgeMode, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::sync::Mutex;
@@ -20,13 +20,18 @@ use std::sync::Mutex;
 async fn test_scoped_mcp_server_through_proxy() -> Result<(), sacp::Error> {
     let conductor = ConductorImpl::new_agent(
         "conductor".to_string(),
-        ProxiesAndAgent::new(ElizaAgent::new(true)).proxy(ScopedProxy),
+        ProxiesAndAgent::new(Testy::new()).proxy(ScopedProxy),
         Default::default(),
     );
 
     let result = yopo::prompt(
         conductor,
-        r#"Use tool test::push with {"elements": ["Hello", "world"]}"#,
+        TestyCommand::CallTool {
+            server: "test".to_string(),
+            tool: "push".to_string(),
+            params: serde_json::json!({"elements": ["Hello", "world"]}),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -49,7 +54,7 @@ async fn test_scoped_mcp_server_through_session() -> Result<(), sacp::Error> {
         .connect_with(
             ConductorImpl::new_agent(
                 "conductor".to_string(),
-                ProxiesAndAgent::new(ElizaAgent::new(true)),
+                ProxiesAndAgent::new(Testy::new()),
                 McpBridgeMode::default(),
             ),
             async |cx| {
@@ -67,7 +72,11 @@ async fn test_scoped_mcp_server_through_session() -> Result<(), sacp::Error> {
                     .block_task()
                     .run_until(async |mut active_session| {
                         active_session
-                            .send_prompt(r#"Use tool test::push with {"elements": ["Hello", "world"]}"#)?;
+                            .send_prompt(TestyCommand::CallTool {
+                                server: "test".to_string(),
+                                tool: "push".to_string(),
+                                params: serde_json::json!({"elements": ["Hello", "world"]}),
+                            }.to_prompt())?;
                         active_session.read_to_string().await
                     })
                     .await?;

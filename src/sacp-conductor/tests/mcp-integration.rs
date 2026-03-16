@@ -7,7 +7,6 @@
 
 mod mcp_integration;
 
-use elizacp::ElizaAgent;
 use futures::{SinkExt, StreamExt, channel::mpsc};
 use sacp::Agent;
 use sacp::schema::{
@@ -16,6 +15,7 @@ use sacp::schema::{
 };
 use sacp_conductor::{ConductorImpl, McpBridgeMode, ProxiesAndAgent};
 use sacp_test::test_binaries;
+use sacp_test::testy::{Testy, TestyCommand};
 
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
@@ -75,7 +75,7 @@ async fn test_proxy_provides_mcp_tools_stdio() -> Result<(), sacp::Error> {
         McpBridgeMode::Stdio {
             conductor_command: conductor_command(),
         },
-        ProxiesAndAgent::new(ElizaAgent::new(true)).proxy(mcp_integration::proxy::ProxyComponent),
+        ProxiesAndAgent::new(Testy::new()).proxy(mcp_integration::proxy::ProxyComponent),
         async |connection_to_editor| {
             // Send initialization request
             let init_response = recv(
@@ -119,7 +119,7 @@ async fn test_proxy_provides_mcp_tools_stdio() -> Result<(), sacp::Error> {
 async fn test_proxy_provides_mcp_tools_http() -> Result<(), sacp::Error> {
     run_test_with_mode(
         McpBridgeMode::Http,
-        ProxiesAndAgent::new(ElizaAgent::new(true)).proxy(mcp_integration::proxy::ProxyComponent),
+        ProxiesAndAgent::new(Testy::new()).proxy(mcp_integration::proxy::ProxyComponent),
         async |connection_to_editor| {
             // Send initialization request
             let init_response = recv(
@@ -177,8 +177,7 @@ async fn test_agent_handles_prompt() -> Result<(), sacp::Error> {
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "mcp-integration-conductor".to_string(),
-            ProxiesAndAgent::new(ElizaAgent::new(true))
-                .proxy(mcp_integration::proxy::ProxyComponent),
+            ProxiesAndAgent::new(Testy::new()).proxy(mcp_integration::proxy::ProxyComponent),
             Default::default(),
         )
         .run(sacp::ByteStreams::new(
@@ -224,13 +223,14 @@ async fn test_agent_handles_prompt() -> Result<(), sacp::Error> {
 
                 tracing::debug!(session_id = %session.session_id.0, "Session created");
 
-                // Send a prompt to call the echo tool via ElizACP's command syntax
+                // Send a prompt to call the echo tool
                 let prompt_response = recv(connection_to_editor.send_request(PromptRequest::new(
                     session.session_id.clone(),
-                    vec![ContentBlock::Text(TextContent::new(
-                            r#"Use tool test::echo with {"message": "Hello from the test!"}"#
-                                .to_string(),
-                        ))],
+                    vec![ContentBlock::Text(TextContent::new(TestyCommand::CallTool {
+                        server: "test".to_string(),
+                        tool: "echo".to_string(),
+                        params: serde_json::json!({"message": "Hello from the test!"}),
+                    }.to_prompt()))],
                 )))
                 .await?;
 

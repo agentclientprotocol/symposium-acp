@@ -1,25 +1,26 @@
-//! Integration test for conductor with arrow proxy and eliza agent.
+//! Integration test for conductor with arrow proxy and test agent.
 //!
 //! This test verifies that:
-//! 1. Conductor can orchestrate a proxy chain with arrow proxy + eliza
-//! 2. Session updates from eliza get the '>' prefix from arrow proxy
+//! 1. Conductor can orchestrate a proxy chain with arrow proxy + test agent
+//! 2. Session updates from test agent get the '>' prefix from arrow proxy
 //! 3. The full proxy chain works end-to-end
 //!
 //! Run `just prep-tests` before running this test.
 
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
-use sacp_test::test_binaries::{arrow_proxy_example, elizacp};
+use sacp_test::test_binaries::{arrow_proxy_example, testy};
+use sacp_test::testy::TestyCommand;
 use sacp_tokio::AcpAgent;
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 #[tokio::test]
-async fn test_conductor_with_arrow_proxy_and_eliza() -> Result<(), sacp::Error> {
-    // Create the component chain: arrow_proxy -> eliza
+async fn test_conductor_with_arrow_proxy_and_test_agent() -> Result<(), sacp::Error> {
+    // Create the component chain: arrow_proxy -> test_agent
     // Uses pre-built binaries to avoid cargo run races during `cargo test --all`
     let arrow_proxy_agent =
         AcpAgent::from_args([arrow_proxy_example().to_string_lossy().to_string()])?;
-    let eliza_agent = elizacp();
+    let test_agent = testy();
 
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
@@ -29,7 +30,7 @@ async fn test_conductor_with_arrow_proxy_and_eliza() -> Result<(), sacp::Error> 
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "conductor".to_string(),
-            ProxiesAndAgent::new(eliza_agent).proxy(arrow_proxy_agent),
+            ProxiesAndAgent::new(test_agent).proxy(arrow_proxy_agent),
             Default::default(),
         )
         .run(sacp::ByteStreams::new(
@@ -43,7 +44,7 @@ async fn test_conductor_with_arrow_proxy_and_eliza() -> Result<(), sacp::Error> 
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 

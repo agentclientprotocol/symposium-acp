@@ -52,21 +52,17 @@ pub fn conductor_binary() -> PathBuf {
     path
 }
 
-/// Returns the path to the elizacp binary, asserting it exists.
-pub fn elizacp_binary() -> PathBuf {
-    let path = debug_binary("elizacp");
+/// Returns the path to the test-agent binary, asserting it exists.
+pub fn testy_binary() -> PathBuf {
+    let path = debug_binary("testy");
     require_binary(&path);
     path
 }
 
-/// Returns an AcpAgent configured for elizacp in deterministic mode.
-pub fn elizacp() -> sacp_tokio::AcpAgent {
-    sacp_tokio::AcpAgent::from_args([
-        elizacp_binary().to_string_lossy().to_string(),
-        "--deterministic".to_string(),
-        "acp".to_string(),
-    ])
-    .expect("failed to create elizacp agent")
+/// Returns an AcpAgent configured for the test agent.
+pub fn testy() -> sacp_tokio::AcpAgent {
+    sacp_tokio::AcpAgent::from_args([testy_binary().to_string_lossy().to_string()])
+        .expect("failed to create test agent")
 }
 
 /// Returns the path to the mcp-echo-server binary, asserting it exists.

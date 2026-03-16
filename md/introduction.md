@@ -28,7 +28,6 @@ src/
 ├── sacp-conductor/    # Conductor binary and library
 ├── sacp-test/         # Test utilities and fixtures
 ├── sacp-trace-viewer/ # Trace visualization tool
-├── elizacp/           # Example agent implementation
 └── yopo/              # "You Only Prompt Once" example client
 ```
 
