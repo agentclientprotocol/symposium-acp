@@ -19,10 +19,11 @@
 //!
 //! Run `just prep-tests` before running these tests.
 
-use sacp::{Agent, Client, Conductor, ConnectTo, DynConnectTo};
+use sacp::{Conductor, ConnectTo, DynConnectTo};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
 use sacp_test::arrow_proxy::run_arrow_proxy;
-use sacp_test::test_binaries::{arrow_proxy_example, conductor_binary, elizacp};
+use sacp_test::test_binaries::{arrow_proxy_example, conductor_binary, testy};
+use sacp_test::testy::{Testy, TestyCommand};
 use sacp_tokio::AcpAgent;
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
@@ -34,16 +35,6 @@ struct MockArrowProxy;
 impl ConnectTo<Conductor> for MockArrowProxy {
     async fn connect_to(self, client: impl ConnectTo<sacp::Proxy>) -> Result<(), sacp::Error> {
         run_arrow_proxy(client).await
-    }
-}
-
-/// Mock Eliza component for testing.
-/// Runs the Eliza agent logic in-process instead of spawning a subprocess.
-struct MockEliza;
-
-impl ConnectTo<Client> for MockEliza {
-    async fn connect_to(self, client: impl ConnectTo<Agent>) -> Result<(), sacp::Error> {
-        ConnectTo::<Client>::connect_to(elizacp::ElizaAgent::new(true), client).await
     }
 }
 
@@ -95,7 +86,7 @@ async fn test_nested_conductor_with_arrow_proxies() -> Result<(), sacp::Error> {
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "outer-conductor".to_string(),
-            ProxiesAndAgent::new(MockEliza).proxy(MockInnerConductor::new(2)),
+            ProxiesAndAgent::new(Testy::new()).proxy(MockInnerConductor::new(2)),
             Default::default(),
         )
         .run(sacp::ByteStreams::new(
@@ -109,14 +100,14 @@ async fn test_nested_conductor_with_arrow_proxies() -> Result<(), sacp::Error> {
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 
         tracing::debug!(?result, "Received response from nested conductor chain");
 
         expect_test::expect![[r#"
-            ">>How do you do. Please state your problem."
+            ">>Hello, world!"
         "#]]
         .assert_debug_eq(&result);
 
@@ -140,7 +131,7 @@ async fn test_nested_conductor_with_arrow_proxies() -> Result<(), sacp::Error> {
 async fn test_nested_conductor_with_external_arrow_proxies() -> Result<(), sacp::Error> {
     // Create the nested component chain using external processes
     // Inner conductor spawned as a separate process with two arrow proxies
-    // Outer conductor manages: inner_conductor -> eliza (both as external processes)
+    // Outer conductor manages: inner_conductor -> test agent (both as external processes)
     // Uses pre-built binaries to avoid cargo run races during `cargo test --all`
     let conductor_path = conductor_binary().to_string_lossy().to_string();
     let arrow_proxy_path = arrow_proxy_example().to_string_lossy().to_string();
@@ -150,7 +141,7 @@ async fn test_nested_conductor_with_external_arrow_proxies() -> Result<(), sacp:
         &arrow_proxy_path,
         &arrow_proxy_path,
     ])?;
-    let eliza = elizacp();
+    let agent = testy();
 
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
@@ -160,7 +151,7 @@ async fn test_nested_conductor_with_external_arrow_proxies() -> Result<(), sacp:
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "outer-conductor".to_string(),
-            ProxiesAndAgent::new(eliza).proxy(inner_conductor),
+            ProxiesAndAgent::new(agent).proxy(inner_conductor),
             Default::default(),
         )
         .run(sacp::ByteStreams::new(
@@ -174,14 +165,14 @@ async fn test_nested_conductor_with_external_arrow_proxies() -> Result<(), sacp:
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 
         tracing::debug!(?result, "Received response from nested conductor chain");
 
         expect_test::expect![[r#"
-            ">>How do you do. Please state your problem."
+            ">>Hello, world!"
         "#]]
         .assert_debug_eq(&result);
 

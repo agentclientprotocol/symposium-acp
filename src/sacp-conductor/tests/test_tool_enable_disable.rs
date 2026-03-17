@@ -4,12 +4,11 @@
 //! and `enable_all_tools` correctly filter which tools are visible and callable.
 
 use sacp::mcp_server::McpServer;
-use sacp::{Agent, Client, Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
+use sacp::{Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tokio::io::duplex;
-use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 /// Input for the echo tool
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -99,33 +98,6 @@ impl<R: RunWithConnectionTo<Conductor> + 'static + Send> ConnectTo<Conductor> fo
     }
 }
 
-/// Elizacp agent component wrapper for testing
-struct ElizacpAgentComponent;
-
-impl ConnectTo<Client> for ElizacpAgentComponent {
-    async fn connect_to(self, client: impl ConnectTo<Agent>) -> Result<(), sacp::Error> {
-        let (elizacp_write, client_read) = duplex(8192);
-        let (client_write, elizacp_read) = duplex(8192);
-
-        let elizacp_transport =
-            sacp::ByteStreams::new(elizacp_write.compat_write(), elizacp_read.compat());
-
-        let client_transport =
-            sacp::ByteStreams::new(client_write.compat_write(), client_read.compat());
-
-        tokio::spawn(async move {
-            if let Err(e) =
-                ConnectTo::<Client>::connect_to(elizacp::ElizaAgent::new(true), elizacp_transport)
-                    .await
-            {
-                tracing::error!("Elizacp error: {}", e);
-            }
-        });
-
-        ConnectTo::<Client>::connect_to(client_transport, client).await
-    }
-}
-
 // ============================================================================
 // Tests for deny-list (disable specific tools)
 // ============================================================================
@@ -135,10 +107,13 @@ async fn test_list_tools_excludes_disabled() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_disabled_tool()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_disabled_tool()?),
             Default::default(),
         ),
-        "List tools from test_server",
+        TestyCommand::ListTools {
+            server: "test_server".to_string(),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -158,10 +133,15 @@ async fn test_enabled_tool_can_be_called() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_disabled_tool()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_disabled_tool()?),
             Default::default(),
         ),
-        r#"Use tool test_server::echo with {"message": "hello"}"#,
+        TestyCommand::CallTool {
+            server: "test_server".to_string(),
+            tool: "echo".to_string(),
+            params: serde_json::json!({"message": "hello"}),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -179,10 +159,15 @@ async fn test_disabled_tool_returns_not_found() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_disabled_tool()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_disabled_tool()?),
             Default::default(),
         ),
-        r#"Use tool test_server::secret with {}"#,
+        TestyCommand::CallTool {
+            server: "test_server".to_string(),
+            tool: "secret".to_string(),
+            params: serde_json::json!({}),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -205,10 +190,13 @@ async fn test_allowlist_only_shows_enabled_tools() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_allowlist()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_allowlist()?),
             Default::default(),
         ),
-        "List tools from allowlist_server",
+        TestyCommand::ListTools {
+            server: "allowlist_server".to_string(),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -231,10 +219,15 @@ async fn test_allowlist_enabled_tool_works() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_allowlist()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_allowlist()?),
             Default::default(),
         ),
-        r#"Use tool allowlist_server::echo with {"message": "allowed"}"#,
+        TestyCommand::CallTool {
+            server: "allowlist_server".to_string(),
+            tool: "echo".to_string(),
+            params: serde_json::json!({"message": "allowed"}),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -252,10 +245,15 @@ async fn test_allowlist_non_enabled_tool_returns_not_found() -> Result<(), sacp:
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_proxy_with_allowlist()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_proxy_with_allowlist()?),
             Default::default(),
         ),
-        r#"Use tool allowlist_server::greet with {"name": "World"}"#,
+        TestyCommand::CallTool {
+            server: "allowlist_server".to_string(),
+            tool: "greet".to_string(),
+            params: serde_json::json!({"name": "World"}),
+        }
+        .to_prompt(),
     )
     .await?;
 

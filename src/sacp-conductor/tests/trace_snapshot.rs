@@ -1,6 +1,6 @@
 //! Snapshot test for trace events from a real yopo interaction.
 //!
-//! This test runs yopo -> conductor (with arrow_proxy -> elizacp) and
+//! This test runs yopo -> conductor (with arrow_proxy -> test_agent) and
 //! captures trace events to a channel for expect_test snapshot verification.
 //!
 //! Run `just prep-tests` before running this test.
@@ -10,7 +10,8 @@ use futures::StreamExt;
 use futures::channel::mpsc;
 use sacp_conductor::trace::TraceEvent;
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
-use sacp_test::test_binaries::{arrow_proxy_example, elizacp};
+use sacp_test::test_binaries::{arrow_proxy_example, testy};
+use sacp_test::testy::TestyCommand;
 use sacp_tokio::AcpAgent;
 use std::collections::HashMap;
 use tokio::io::duplex;
@@ -135,7 +136,7 @@ async fn test_trace_snapshot() -> Result<(), sacp::Error> {
     // Uses pre-built binaries to avoid cargo run races during `cargo test --all`
     let arrow_proxy_agent =
         AcpAgent::from_args([arrow_proxy_example().to_string_lossy().to_string()])?;
-    let eliza_agent = elizacp();
+    let eliza_agent = testy();
 
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
@@ -160,7 +161,7 @@ async fn test_trace_snapshot() -> Result<(), sacp::Error> {
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await
     })
@@ -263,7 +264,7 @@ async fn test_trace_snapshot() -> Result<(), sacp::Error> {
                     params: Object {
                         "prompt": Array [
                             Object {
-                                "text": String("Hello"),
+                                "text": String("{\"command\":\"greet\"}"),
                                 "type": String("text"),
                             },
                         ],
@@ -283,7 +284,7 @@ async fn test_trace_snapshot() -> Result<(), sacp::Error> {
                         "sessionId": String("session:0"),
                         "update": Object {
                             "content": Object {
-                                "text": String("How do you do. Please state your problem."),
+                                "text": String("Hello, world!"),
                                 "type": String("text"),
                             },
                             "sessionUpdate": String("agent_message_chunk"),

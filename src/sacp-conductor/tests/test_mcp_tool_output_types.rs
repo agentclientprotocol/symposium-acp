@@ -4,12 +4,11 @@
 //! when tools return non-object types like bare strings or integers.
 
 use sacp::mcp_server::McpServer;
-use sacp::{Agent, Client, Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
+use sacp::{Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tokio::io::duplex;
-use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 /// Empty input for test tools
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -53,42 +52,20 @@ impl<R: RunWithConnectionTo<Conductor> + 'static + Send> ConnectTo<Conductor>
     }
 }
 
-/// Elizacp agent component wrapper for testing
-struct ElizacpAgentComponent;
-
-impl ConnectTo<Client> for ElizacpAgentComponent {
-    async fn connect_to(self, client: impl ConnectTo<Agent>) -> Result<(), sacp::Error> {
-        let (elizacp_write, client_read) = duplex(8192);
-        let (client_write, elizacp_read) = duplex(8192);
-
-        let elizacp_transport =
-            sacp::ByteStreams::new(elizacp_write.compat_write(), elizacp_read.compat());
-
-        let client_transport =
-            sacp::ByteStreams::new(client_write.compat_write(), client_read.compat());
-
-        tokio::spawn(async move {
-            if let Err(e) =
-                ConnectTo::<Client>::connect_to(elizacp::ElizaAgent::new(true), elizacp_transport)
-                    .await
-            {
-                tracing::error!("Elizacp error: {}", e);
-            }
-        });
-
-        ConnectTo::<Client>::connect_to(client_transport, client).await
-    }
-}
-
 #[tokio::test]
 async fn test_tool_returning_string() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_test_proxy()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_test_proxy()?),
             Default::default(),
         ),
-        r#"Use tool test_server::return_string with {}"#,
+        TestyCommand::CallTool {
+            server: "test_server".to_string(),
+            tool: "return_string".to_string(),
+            params: serde_json::json!({}),
+        }
+        .to_prompt(),
     )
     .await?;
 
@@ -106,10 +83,15 @@ async fn test_tool_returning_integer() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_test_proxy()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_test_proxy()?),
             Default::default(),
         ),
-        r#"Use tool test_server::return_integer with {}"#,
+        TestyCommand::CallTool {
+            server: "test_server".to_string(),
+            tool: "return_integer".to_string(),
+            params: serde_json::json!({}),
+        }
+        .to_prompt(),
     )
     .await?;
 

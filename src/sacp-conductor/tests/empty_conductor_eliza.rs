@@ -1,13 +1,14 @@
-//! Integration test for conductor with an empty conductor and eliza agent.
+//! Integration test for conductor with an empty conductor and test agent.
 //!
 //! This test verifies that:
-//! 1. Conductor can orchestrate a chain with an empty conductor as a proxy + eliza
+//! 1. Conductor can orchestrate a chain with an empty conductor as a proxy + test agent
 //! 2. Empty conductor (with no components) correctly acts as a passthrough proxy
-//! 3. Messages flow correctly through the empty conductor to eliza
+//! 3. Messages flow correctly through the empty conductor to the agent
 //! 4. The full chain works end-to-end
 
-use sacp::{Agent, Client, Conductor, ConnectTo, Proxy};
+use sacp::{Conductor, ConnectTo, Proxy};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
@@ -18,7 +19,6 @@ struct MockEmptyConductor;
 impl ConnectTo<Conductor> for MockEmptyConductor {
     async fn connect_to(self, client: impl ConnectTo<Proxy>) -> Result<(), sacp::Error> {
         // Create an empty conductor with no components - it should act as a passthrough
-        // Use Component::serve instead of .run() to get the ProxyToConductor impl
         let empty_components: Vec<sacp::DynConnectTo<Conductor>> = vec![];
         ConnectTo::<Conductor>::connect_to(
             ConductorImpl::new_proxy(
@@ -32,18 +32,8 @@ impl ConnectTo<Conductor> for MockEmptyConductor {
     }
 }
 
-/// Mock Eliza component for testing.
-/// Runs the Eliza agent logic in-process instead of spawning a subprocess.
-struct MockEliza;
-
-impl ConnectTo<Client> for MockEliza {
-    async fn connect_to(self, client: impl ConnectTo<Agent>) -> Result<(), sacp::Error> {
-        ConnectTo::<Client>::connect_to(elizacp::ElizaAgent::new(true), client).await
-    }
-}
-
 #[tokio::test]
-async fn test_conductor_with_empty_conductor_and_eliza() -> Result<(), sacp::Error> {
+async fn test_conductor_with_empty_conductor_and_test_agent() -> Result<(), sacp::Error> {
     // Initialize tracing for debugging
     let _ = tracing_subscriber::fmt()
         .with_env_filter(
@@ -52,7 +42,6 @@ async fn test_conductor_with_empty_conductor_and_eliza() -> Result<(), sacp::Err
         )
         .with_test_writer()
         .try_init();
-    // Create the component chain: empty_conductor -> eliza
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
     let (conductor_write, editor_read) = duplex(8192);
@@ -61,7 +50,7 @@ async fn test_conductor_with_empty_conductor_and_eliza() -> Result<(), sacp::Err
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "outer-conductor".to_string(),
-            ProxiesAndAgent::new(MockEliza).proxy(MockEmptyConductor),
+            ProxiesAndAgent::new(Testy::new()).proxy(MockEmptyConductor),
             Default::default(),
         )
         .run(sacp::ByteStreams::new(
@@ -75,16 +64,15 @@ async fn test_conductor_with_empty_conductor_and_eliza() -> Result<(), sacp::Err
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 
         tracing::debug!(?result, "Received response from empty conductor chain");
 
-        // Empty conductor should not modify the response, so we expect
-        // the standard eliza response without any prefix
+        // Empty conductor should not modify the response
         expect_test::expect![[r#"
-            "How do you do. Please state your problem."
+            "Hello, world!"
         "#]]
         .assert_debug_eq(&result);
 

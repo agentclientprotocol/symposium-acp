@@ -5,13 +5,13 @@
 //! 2. Multi-component chains: proxies receive `InitializeProxyRequest`
 //! 3. Last component (agent) receives `InitializeRequest`
 
-use elizacp::ElizaAgent;
 use sacp::schema::{
     AgentCapabilities, InitializeProxyRequest, InitializeRequest, InitializeResponse,
     ProtocolVersion,
 };
 use sacp::{Agent, Client, Conductor, ConnectTo, DynConnectTo, Proxy};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::Testy;
 use std::sync::Arc;
 use std::sync::Mutex;
 
@@ -128,7 +128,7 @@ async fn run_test_with_components(
         .with_spawned(|_cx| async move {
             ConductorImpl::new_agent(
                 "conductor".to_string(),
-                ProxiesAndAgent::new(ElizaAgent::new(true)).proxies(proxies),
+                ProxiesAndAgent::new(Testy::new()).proxies(proxies),
                 Default::default(),
             )
             .run(sacp::ByteStreams::new(
@@ -309,7 +309,7 @@ async fn test_conductor_rejects_initialize_proxy_forwarded_to_agent() -> Result<
     // The conductor should reject this with an error.
     let result = run_bad_proxy_test(
         vec![DynConnectTo::new(BadProxy)],
-        DynConnectTo::new(ElizaAgent::new(true)),
+        DynConnectTo::new(Testy::new()),
         async |connection_to_editor| {
             let init_response = recv(
                 connection_to_editor.send_request(InitializeRequest::new(ProtocolVersion::LATEST)),
@@ -352,7 +352,7 @@ async fn test_conductor_rejects_initialize_proxy_forwarded_to_proxy() -> Result<
             DynConnectTo::new(BadProxy),
             DynConnectTo::new(InitComponent::new(&InitConfig::new())), // This proxy will receive the bad request
         ],
-        DynConnectTo::new(ElizaAgent::new(true)), // Agent
+        DynConnectTo::new(Testy::new()), // Agent
         async |connection_to_editor| {
             let init_response = recv(
                 connection_to_editor.send_request(InitializeRequest::new(ProtocolVersion::LATEST)),

@@ -6,27 +6,28 @@
 //! 3. The full proxy chain works end-to-end
 //!
 //! Chain structure:
-//! test-editor -> conductor -> arrow_proxy1 -> arrow_proxy2 -> eliza
+//! test-editor -> conductor -> arrow_proxy1 -> arrow_proxy2 -> test_agent
 //!
 //! Expected behavior:
-//! - arrow_proxy2 adds first '>' to eliza's response: ">Hello..."
+//! - arrow_proxy2 adds first '>' to test_agent's response: ">Hello..."
 //! - arrow_proxy1 adds second '>' to that: ">>Hello..."
 //!
 //! Run `just prep-tests` before running this test.
 
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
-use sacp_test::test_binaries::{arrow_proxy_example, elizacp};
+use sacp_test::test_binaries::{arrow_proxy_example, testy};
+use sacp_test::testy::TestyCommand;
 use sacp_tokio::AcpAgent;
 use tokio::io::duplex;
 use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 #[tokio::test]
 async fn test_conductor_with_two_external_arrow_proxies() -> Result<(), sacp::Error> {
-    // Create the component chain: arrow_proxy1 -> arrow_proxy2 -> eliza
+    // Create the component chain: arrow_proxy1 -> arrow_proxy2 -> test_agent
     // Uses pre-built binaries to avoid cargo run races during `cargo test --all`
     let arrow_proxy1 = AcpAgent::from_args([arrow_proxy_example().to_string_lossy().to_string()])?;
     let arrow_proxy2 = AcpAgent::from_args([arrow_proxy_example().to_string_lossy().to_string()])?;
-    let eliza = elizacp();
+    let agent = testy();
 
     // Create duplex streams for editor <-> conductor communication
     let (editor_write, conductor_read) = duplex(8192);
@@ -36,7 +37,7 @@ async fn test_conductor_with_two_external_arrow_proxies() -> Result<(), sacp::Er
     let conductor_handle = tokio::spawn(async move {
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(eliza)
+            ProxiesAndAgent::new(agent)
                 .proxy(arrow_proxy1)
                 .proxy(arrow_proxy2),
             Default::default(),
@@ -52,12 +53,12 @@ async fn test_conductor_with_two_external_arrow_proxies() -> Result<(), sacp::Er
     let result = tokio::time::timeout(std::time::Duration::from_secs(30), async move {
         let result = yopo::prompt(
             sacp::ByteStreams::new(editor_write.compat_write(), editor_read.compat()),
-            "Hello",
+            TestyCommand::Greet.to_prompt(),
         )
         .await?;
 
         expect_test::expect![[r#"
-            ">>How do you do. Please state your problem."
+            ">>Hello, world!"
         "#]]
         .assert_debug_eq(&result);
 

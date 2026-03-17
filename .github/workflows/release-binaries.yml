@@ -3,7 +3,6 @@ name: Release Binaries
 on:
   push:
     tags:
-      - "elizacp-v*"
       - "yopo-v*"
       - "sacp-conductor-v*"
       - "sacp-tee-v*"

@@ -4,12 +4,11 @@
 //! that don't need mutable state.
 
 use sacp::mcp_server::McpServer;
-use sacp::{Client, Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
+use sacp::{Conductor, ConnectTo, DynConnectTo, Proxy, RunWithConnectionTo};
 use sacp_conductor::{ConductorImpl, ProxiesAndAgent};
+use sacp_test::testy::{Testy, TestyCommand};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use tokio::io::duplex;
-use tokio_util::compat::{TokioAsyncReadCompatExt, TokioAsyncWriteCompatExt};
 
 /// Input for the greet tool
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
@@ -51,45 +50,20 @@ impl<R: RunWithConnectionTo<Conductor> + 'static + Send> ConnectTo<Conductor>
     }
 }
 
-/// Elizacp agent component wrapper for testing
-struct ElizacpAgentComponent;
-
-impl ConnectTo<Client> for ElizacpAgentComponent {
-    async fn connect_to(self, client: impl ConnectTo<sacp::Agent>) -> Result<(), sacp::Error> {
-        // Create duplex channels for bidirectional communication
-        let (elizacp_write, client_read) = duplex(8192);
-        let (client_write, elizacp_read) = duplex(8192);
-
-        let elizacp_transport =
-            sacp::ByteStreams::new(elizacp_write.compat_write(), elizacp_read.compat());
-
-        let client_transport =
-            sacp::ByteStreams::new(client_write.compat_write(), client_read.compat());
-
-        // Spawn elizacp in a background task
-        tokio::spawn(async move {
-            if let Err(e) =
-                ConnectTo::<Client>::connect_to(elizacp::ElizaAgent::new(true), elizacp_transport)
-                    .await
-            {
-                tracing::error!("Elizacp error: {}", e);
-            }
-        });
-
-        // Serve the client with the transport connected to elizacp
-        ConnectTo::<Client>::connect_to(client_transport, client).await
-    }
-}
-
 #[tokio::test]
 async fn test_tool_fn_greet() -> Result<(), sacp::Error> {
     let result = yopo::prompt(
         ConductorImpl::new_agent(
             "test-conductor".to_string(),
-            ProxiesAndAgent::new(ElizacpAgentComponent).proxy(create_greet_proxy()?),
+            ProxiesAndAgent::new(Testy::new()).proxy(create_greet_proxy()?),
             Default::default(),
         ),
-        r#"Use tool greet_server::greet with {"name": "World"}"#,
+        TestyCommand::CallTool {
+            server: "greet_server".to_string(),
+            tool: "greet".to_string(),
+            params: serde_json::json!({"name": "World"}),
+        }
+        .to_prompt(),
     )
     .await?;
 
