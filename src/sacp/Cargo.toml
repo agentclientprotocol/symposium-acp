@@ -4,7 +4,7 @@ version = "11.0.0"
 edition = "2024"
 description = "Core protocol types and traits for SACP (Symposium's extensions to ACP)"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/symposium-dev/symposium-acp"
+repository = "https://github.com/agentclientprotocol/symposium-acp"
 keywords = ["acp", "agent", "protocol", "ai"]
 categories = ["development-tools"]
 

@@ -48,7 +48,7 @@ Client.builder()
 See the [crate documentation](https://docs.rs/sacp) for:
 
 - **[Cookbook](https://docs.rs/sacp/latest/sacp/cookbook/)** - Patterns for building clients, proxies, and agents
-- **[Examples](https://github.com/symposium-dev/symposium-acp/tree/main/src/sacp/examples)** - Working code you can run
+- **[Examples](https://github.com/agentclientprotocol/symposium-acp/tree/main/src/sacp/examples)** - Working code you can run
 
 You may also enjoy looking at:
 

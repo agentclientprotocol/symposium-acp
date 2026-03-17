@@ -10,5 +10,5 @@ command = "mdbook-mermaid"
 
 [output.html]
 additional-js = ["mermaid.min.js", "mermaid-init.js"]
-git-repository-url = "https://github.com/symposium-dev/symposium-acp"
-edit-url-template = "https://github.com/symposium-dev/symposium-acp/edit/main/{path}"
+git-repository-url = "https://github.com/agentclientprotocol/symposium-acp"
+edit-url-template = "https://github.com/agentclientprotocol/symposium-acp/edit/main/{path}"
