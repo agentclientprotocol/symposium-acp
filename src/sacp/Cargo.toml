@@ -8,6 +8,22 @@ repository = "https://github.com/symposium-dev/symposium-acp"
 keywords = ["acp", "agent", "protocol", "ai"]
 categories = ["development-tools"]
 
+[features]
+default = []
+
+# Forward unstable features from agent-client-protocol-schema.
+# Enable these to get support for the corresponding unstable ACP methods.
+unstable = [
+    "unstable_session_model",
+    "unstable_session_fork",
+    "unstable_session_resume",
+    "unstable_session_close",
+]
+unstable_session_model = ["agent-client-protocol-schema/unstable_session_model"]
+unstable_session_fork = ["agent-client-protocol-schema/unstable_session_fork"]
+unstable_session_resume = ["agent-client-protocol-schema/unstable_session_resume"]
+unstable_session_close = ["agent-client-protocol-schema/unstable_session_close"]
+
 [dependencies]
 agent-client-protocol-schema.workspace = true
 sacp-derive = { version = "11.0.0", path = "../sacp-derive" }
