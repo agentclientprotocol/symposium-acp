@@ -1,6 +1,6 @@
 [package]
 name = "sacp-tokio"
-version = "11.0.0"
+version = "12.0.0"
 edition = "2024"
 description = "Tokio-based utilities for SACP (Symposium's extensions to ACP)"
 license = "MIT OR Apache-2.0"
@@ -9,7 +9,7 @@ keywords = ["acp", "agent", "protocol", "ai", "tokio"]
 categories = ["development-tools"]
 
 [dependencies]
-sacp = { version = "11.0.0", path = "../sacp" }
+sacp = { version = "12.0.0", path = "../sacp" }
 futures.workspace = true
 
 serde.workspace = true

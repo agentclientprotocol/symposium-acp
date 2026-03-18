@@ -15,9 +15,9 @@ name = "testy"
 path = "src/bin/testy.rs"
 
 [dependencies]
-sacp = { version = "11.0.0", path = "../sacp" }
-sacp-tokio = { version = "11.0.0", path = "../sacp-tokio" }
-yopo = { version = "11.0.0", path = "../yopo" }
+sacp = { version = "12.0.0", path = "../sacp" }
+sacp-tokio = { version = "12.0.0", path = "../sacp-tokio" }
+yopo = { version = "11.0.1", path = "../yopo" }
 rmcp = { workspace = true, features = ["server", "client", "transport-child-process", "transport-streamable-http-client-reqwest"] }
 anyhow.workspace = true
 uuid.workspace = true
