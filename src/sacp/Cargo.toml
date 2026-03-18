@@ -1,6 +1,6 @@
 [package]
 name = "sacp"
-version = "11.0.0"
+version = "12.0.0"
 edition = "2024"
 description = "Core protocol types and traits for SACP (Symposium's extensions to ACP)"
 license = "MIT OR Apache-2.0"

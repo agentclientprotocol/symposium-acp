@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [12.0.0](https://github.com/agentclientprotocol/symposium-acp/compare/sacp-conductor-v11.0.0...sacp-conductor-v12.0.0) - 2026-03-18
+
+### Added
+
+- [**breaking**] replace elizacp with Testy, a minimal internal test agent
+
+### Other
+
+- update all repository URLs from symposium-dev to agentclientprotocol
+
 ## [11.0.0](https://github.com/symposium-dev/symposium-acp/compare/sacp-conductor-v10.0.1...sacp-conductor-v11.0.0) - 2026-01-19
 
 ### Added
