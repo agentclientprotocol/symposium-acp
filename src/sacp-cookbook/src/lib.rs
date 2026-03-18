@@ -851,5 +851,5 @@ pub mod running_proxies_with_conductor {
     //!
     //! [`sacp-conductor`]: https://crates.io/crates/sacp-conductor
     //! [`SuccessorMessage`]: sacp::schema::SuccessorMessage
-    //! [`sacp-conductor` tests]: https://github.com/symposium-dev/symposium-acp/tree/main/src/sacp-conductor/tests
+    //! [`sacp-conductor` tests]: https://github.com/agentclientprotocol/symposium-acp/tree/main/src/sacp-conductor/tests
 }

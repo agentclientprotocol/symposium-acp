@@ -8,6 +8,7 @@ on:
 jobs:
   release-plz-release:
     name: Release-plz release
+    environment: release # Optional: for enhanced security
     runs-on: ubuntu-latest
     if: ${{ github.repository_owner == 'agentclientprotocol' }}
     permissions:
@@ -16,20 +17,32 @@ jobs:
     steps:
       - &checkout
         name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           fetch-depth: 0
-          persist-credentials: true
-          token: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          persist-credentials: false
       - &install-rust
         name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@efa25f7f19611383d5b0ccf2d1c8914531636bf9
+        with:
+          toolchain: stable
+      - &generate-token
+        # Generating a GitHub token, so that PRs and tags created by
+        # the release-plz-action can trigger actions workflows.
+        name: Generate GitHub token
+        uses: actions/create-github-app-token@f8d387b68d61c58ab83c6c016672934102569859
+        id: generate-token
+        with:
+          # GitHub App ID secret name
+          app-id: ${{ secrets.RELEASE_PLZ_APP_ID }}
+          # GitHub App private key secret name
+          private-key: ${{ secrets.RELEASE_PLZ_APP_PRIVATE_KEY }}
       - name: Run release-plz
-        uses: release-plz/action@v0.5
+        uses: release-plz/action@1528104d2ca23787631a1c1f022abb64b34c1e11
         with:
           command: release
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}
 
   release-plz-pr:
     name: Release-plz PR
@@ -44,9 +57,10 @@ jobs:
     steps:
       - *checkout
       - *install-rust
+      - *generate-token
       - name: Run release-plz
-        uses: release-plz/action@v0.5
+        uses: release-plz/action@1528104d2ca23787631a1c1f022abb64b34c1e11
         with:
           command: release-pr
         env:
-          GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
+          GITHUB_TOKEN: ${{ steps.generate-token.outputs.token }}

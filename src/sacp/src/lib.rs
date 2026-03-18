@@ -49,7 +49,7 @@
 //!
 //! For a complete working example, see [`yolo_one_shot_client.rs`][yolo].
 //!
-//! [yolo]: https://github.com/symposium-dev/symposium-acp/blob/main/src/sacp/examples/yolo_one_shot_client.rs
+//! [yolo]: https://github.com/agentclientprotocol/symposium-acp/blob/main/src/sacp/examples/yolo_one_shot_client.rs
 //!
 //! ## Cookbook
 //!
