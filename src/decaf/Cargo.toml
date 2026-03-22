@@ -1,0 +1,21 @@
+[package]
+name = "decaf"
+version = "1.0.0-alpha.1"
+edition = "2024"
+description = "Debouncing proxy for ACP - coalesces agent message chunks"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/symposium-dev/symposium-acp"
+keywords = ["acp", "agent", "proxy", "debounce"]
+categories = ["development-tools"]
+
+[dependencies]
+sacp = { version = "11.0.0-alpha.1", path = "../sacp" }
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+futures.workspace = true
+sacp-conductor = { path = "../sacp-conductor" }
+sacp-test = { path = "../sacp-test" }
+tokio-util.workspace = true
+tracing-subscriber.workspace = true
